@@ -79,7 +79,7 @@ graph TB
 
 ## Contributing
 
-Submit PRs following security standards. All contributions require code review and security assessment. Report security issues to security@apuhealth.io.
+Submit PRs following security standards. All contributions require code review and security assessment. Report security issues to security@apusensible.io.
 
 ## License
 
