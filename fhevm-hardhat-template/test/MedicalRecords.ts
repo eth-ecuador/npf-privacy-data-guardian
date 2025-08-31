@@ -20,14 +20,15 @@ async function deployMedicalRecordsFixture() {
   return { medicalRecordsContract, contractAddress };
 }
 
-describe("MedicalRecords Foundation System", function () {
+describe("MedicalRecords Foundation System v2", function () {
   let signers: Signers;
   let medicalRecordsContract: MedicalRecords;
   let contractAddress: string;
 
-  const testPatientName = "Juan";  // Shortened for testing
+  const testPatientName = "Juan Perez";
   const testPatientId = 12345;
   const testDisease1 = "Diabetes";
+  const testDisease2 = "Hypertension";
 
   before(async function () {
     const ethSigners: HardhatEthersSigner[] = await ethers.getSigners();
@@ -42,7 +43,7 @@ describe("MedicalRecords Foundation System", function () {
 
   beforeEach(async function () {
     if (!fhevm.isMock) {
-      console.warn(`This hardhat test suite cannot run on Sepolia Testnet`);
+      console.warn("This hardhat test suite cannot run on Sepolia Testnet");
       this.skip();
     }
 
@@ -70,6 +71,18 @@ describe("MedicalRecords Foundation System", function () {
       expect(isAuthorized).to.be.true;
     });
 
+    it("should allow owner to revoke foundation authorization", async function () {
+      const foundation = signers.foundation.address;
+      
+      await expect(
+        medicalRecordsContract.connect(signers.deployer).revokeFoundation(foundation)
+      ).to.emit(medicalRecordsContract, "FoundationRevoked")
+       .withArgs(foundation);
+
+      const isAuthorized = await medicalRecordsContract.isFoundationAuthorized(foundation);
+      expect(isAuthorized).to.be.false;
+    });
+
     it("should not allow non-owner to authorize foundations", async function () {
       await expect(
         medicalRecordsContract.connect(signers.unauthorizedUser).authorizeFoundation(signers.doctor.address)
@@ -77,117 +90,72 @@ describe("MedicalRecords Foundation System", function () {
     });
   });
 
-  describe("Patient Registration", function () {
-    it("should register a new patient successfully", async function () {
+  describe("Patient Registration (v2 - Public Names)", function () {
+    it("should register a new patient with public name successfully", async function () {
       const patient = signers.patient.address;
-      
-      // Convert name to bytes using Buffer (Node.js compatible)
-      const nameBytes = Buffer.from(testPatientName, 'utf8');
 
-      // Create encrypted input
+      // Create encrypted input only for ID (name is now public)
       const encryptedInput = await fhevm.createEncryptedInput(contractAddress, signers.foundation.address);
-      
-      // Add each byte of the name
-      for (let i = 0; i < nameBytes.length; i++) {
-        encryptedInput.add8(nameBytes[i]);
-      }
-      
-      // Add patient ID
       encryptedInput.add32(testPatientId);
-      
       const encrypted = await encryptedInput.encrypt();
-      const nameHandles = encrypted.handles.slice(0, nameBytes.length);
 
       await expect(
         medicalRecordsContract
           .connect(signers.foundation)
           .registerPatient(
             patient,
-            nameHandles,
-            nameBytes.length,
-            encrypted.handles[nameBytes.length],
+            testPatientName,           // Public name
+            encrypted.handles[0],      // Encrypted ID
             encrypted.inputProof
           )
       ).to.emit(medicalRecordsContract, "PatientRegistered")
-       .withArgs(patient, signers.foundation.address);
+       .withArgs(patient, signers.foundation.address, testPatientName);
 
       expect(await medicalRecordsContract.isPatientRegistered(patient)).to.be.true;
       expect(await medicalRecordsContract.getTotalPatients()).to.equal(1);
     });
 
-    it("should not allow unauthorized users to register patients", async function () {
+    it("should return public name without decryption", async function () {
       const patient = signers.patient.address;
-      const nameBytes = Buffer.from(testPatientName, 'utf8');
-
-      const encryptedInput = await fhevm.createEncryptedInput(contractAddress, signers.unauthorizedUser.address);
-      
-      for (let i = 0; i < nameBytes.length; i++) {
-        encryptedInput.add8(nameBytes[i]);
-      }
-      encryptedInput.add32(testPatientId);
-      
-      const encrypted = await encryptedInput.encrypt();
-      const nameHandles = encrypted.handles.slice(0, nameBytes.length);
-
-      await expect(
-        medicalRecordsContract
-          .connect(signers.unauthorizedUser)
-          .registerPatient(
-            patient,
-            nameHandles,
-            nameBytes.length,
-            encrypted.handles[nameBytes.length],
-            encrypted.inputProof
-          )
-      ).to.be.revertedWith("Not an authorized foundation");
-    });
-
-    it("should decrypt patient data correctly", async function () {
-      const patient = signers.patient.address;
-      const nameBytes = Buffer.from(testPatientName, 'utf8');
 
       // Register patient
       const encryptedInput = await fhevm.createEncryptedInput(contractAddress, signers.foundation.address);
-      for (let i = 0; i < nameBytes.length; i++) {
-        encryptedInput.add8(nameBytes[i]);
-      }
       encryptedInput.add32(testPatientId);
-      
       const encrypted = await encryptedInput.encrypt();
-      const nameHandles = encrypted.handles.slice(0, nameBytes.length);
 
       await medicalRecordsContract
         .connect(signers.foundation)
         .registerPatient(
           patient,
-          nameHandles,
-          nameBytes.length,
-          encrypted.handles[nameBytes.length],
+          testPatientName,
+          encrypted.handles[0],
           encrypted.inputProof
         );
 
-      // Get and decrypt patient name
-      const [encryptedNameData, nameLength] = await medicalRecordsContract
+      // Get patient name (should be public)
+      const name = await medicalRecordsContract
         .connect(signers.foundation)
         .getPatientName(patient);
 
-      expect(encryptedNameData.length).to.be.greaterThan(0);
-      expect(nameLength).to.equal(nameBytes.length);
+      expect(name).to.equal(testPatientName);
+    });
 
-      // Decrypt name bytes
-      const decryptedBytes = new Array(Number(nameLength));
-      for (let i = 0; i < Number(nameLength); i++) {
-        const decryptedByte = await fhevm.userDecryptEuint(
-          FhevmType.euint8,
-          encryptedNameData[i],
-          contractAddress,
-          signers.foundation
+    it("should decrypt patient ID correctly", async function () {
+      const patient = signers.patient.address;
+
+      // Register patient
+      const encryptedInput = await fhevm.createEncryptedInput(contractAddress, signers.foundation.address);
+      encryptedInput.add32(testPatientId);
+      const encrypted = await encryptedInput.encrypt();
+
+      await medicalRecordsContract
+        .connect(signers.foundation)
+        .registerPatient(
+          patient,
+          testPatientName,
+          encrypted.handles[0],
+          encrypted.inputProof
         );
-        decryptedBytes[i] = Number(decryptedByte);
-      }
-
-      const decryptedName = Buffer.from(decryptedBytes).toString('utf8');
-      expect(decryptedName).to.equal(testPatientName);
 
       // Get and decrypt patient ID
       const encryptedId = await medicalRecordsContract
@@ -203,30 +171,42 @@ describe("MedicalRecords Foundation System", function () {
 
       expect(decryptedId).to.equal(testPatientId);
     });
+
+    it("should not allow unauthorized users to register patients", async function () {
+      const patient = signers.patient.address;
+
+      const encryptedInput = await fhevm.createEncryptedInput(contractAddress, signers.unauthorizedUser.address);
+      encryptedInput.add32(testPatientId);
+      const encrypted = await encryptedInput.encrypt();
+
+      await expect(
+        medicalRecordsContract
+          .connect(signers.unauthorizedUser)
+          .registerPatient(
+            patient,
+            testPatientName,
+            encrypted.handles[0],
+            encrypted.inputProof
+          )
+      ).to.be.revertedWith("Not an authorized foundation");
+    });
   });
 
   describe("Disease Management", function () {
     beforeEach(async function () {
       // Register patient first
       const patient = signers.patient.address;
-      const nameBytes = Buffer.from(testPatientName, 'utf8');
 
       const encryptedInput = await fhevm.createEncryptedInput(contractAddress, signers.foundation.address);
-      for (let i = 0; i < nameBytes.length; i++) {
-        encryptedInput.add8(nameBytes[i]);
-      }
       encryptedInput.add32(testPatientId);
-      
       const encrypted = await encryptedInput.encrypt();
-      const nameHandles = encrypted.handles.slice(0, nameBytes.length);
 
       await medicalRecordsContract
         .connect(signers.foundation)
         .registerPatient(
           patient,
-          nameHandles,
-          nameBytes.length,
-          encrypted.handles[nameBytes.length],
+          testPatientName,
+          encrypted.handles[0],
           encrypted.inputProof
         );
     });
@@ -304,24 +284,17 @@ describe("MedicalRecords Foundation System", function () {
     beforeEach(async function () {
       // Register patient
       const patient = signers.patient.address;
-      const nameBytes = Buffer.from(testPatientName, 'utf8');
 
       const encryptedInput = await fhevm.createEncryptedInput(contractAddress, signers.foundation.address);
-      for (let i = 0; i < nameBytes.length; i++) {
-        encryptedInput.add8(nameBytes[i]);
-      }
       encryptedInput.add32(testPatientId);
-      
       const encrypted = await encryptedInput.encrypt();
-      const nameHandles = encrypted.handles.slice(0, nameBytes.length);
 
       await medicalRecordsContract
         .connect(signers.foundation)
         .registerPatient(
           patient,
-          nameHandles,
-          nameBytes.length,
-          encrypted.handles[nameBytes.length],
+          testPatientName,
+          encrypted.handles[0],
           encrypted.inputProof
         );
     });
@@ -342,6 +315,28 @@ describe("MedicalRecords Foundation System", function () {
       ).to.be.true;
     });
 
+    it("should revoke access successfully", async function () {
+      const patient = signers.patient.address;
+      const doctor = signers.doctor.address;
+
+      // Grant access first
+      await medicalRecordsContract
+        .connect(signers.patient)
+        .grantAccess(doctor);
+
+      // Then revoke it
+      await expect(
+        medicalRecordsContract
+          .connect(signers.patient)
+          .revokeAccess(doctor)
+      ).to.emit(medicalRecordsContract, "AccessRevoked")
+       .withArgs(patient, doctor);
+
+      expect(
+        await medicalRecordsContract.authorizedAccess(patient, doctor)
+      ).to.be.false;
+    });
+
     it("should not allow unauthorized access to patient data", async function () {
       const patient = signers.patient.address;
 
@@ -350,6 +345,253 @@ describe("MedicalRecords Foundation System", function () {
           .connect(signers.unauthorizedUser)
           .getPatientName(patient)
       ).to.be.revertedWith("Not authorized to access this patient's data");
+    });
+  });
+
+  describe("Statistics Functions", function () {
+    beforeEach(async function () {
+      // Register multiple patients for statistics testing
+      const patients = [
+        { address: signers.patient.address, name: "Patient One", id: 11111 },
+        { address: signers.doctor.address, name: "Patient Two", id: 22222 },
+        { address: signers.unauthorizedUser.address, name: "Patient Three", id: 33333 }
+      ];
+
+      for (const patient of patients) {
+        const encryptedInput = await fhevm.createEncryptedInput(contractAddress, signers.foundation.address);
+        encryptedInput.add32(patient.id);
+        const encrypted = await encryptedInput.encrypt();
+
+        await medicalRecordsContract
+          .connect(signers.foundation)
+          .registerPatient(
+            patient.address,
+            patient.name,
+            encrypted.handles[0],
+            encrypted.inputProof
+          );
+
+        // Add diseases to first two patients
+        if (patient.address === signers.patient.address || patient.address === signers.doctor.address) {
+          const diseaseBytes = Buffer.from(testDisease1, 'utf8');
+          const diseaseInput = await fhevm.createEncryptedInput(contractAddress, signers.foundation.address);
+          
+          for (let i = 0; i < diseaseBytes.length; i++) {
+            diseaseInput.add8(diseaseBytes[i]);
+          }
+          
+          const diseaseEncrypted = await diseaseInput.encrypt();
+
+          await medicalRecordsContract
+            .connect(signers.foundation)
+            .addDisease(
+              patient.address,
+              diseaseEncrypted.handles,
+              diseaseBytes.length,
+              diseaseEncrypted.inputProof
+            );
+        }
+      }
+    });
+
+    it("should return correct system statistics", async function () {
+      const [totalPatients, totalDiseases, avgDiseases] = await medicalRecordsContract.getSystemStatistics();
+      
+      expect(totalPatients).to.equal(3);
+      expect(totalDiseases).to.equal(2); // Two patients have diseases
+      expect(avgDiseases).to.equal(66); // (2 diseases / 3 patients) * 100 = 66.66 -> 66
+    });
+
+    it("should return all patient names for statistics", async function () {
+      const names = await medicalRecordsContract.getAllPatientNames();
+      
+      expect(names.length).to.equal(3);
+      expect(names).to.include("Patient One");
+      expect(names).to.include("Patient Two");
+      expect(names).to.include("Patient Three");
+    });
+
+    it("should return correct foundation patient count", async function () {
+      const foundationCount = await medicalRecordsContract.getFoundationPatientCount(signers.foundation.address);
+      expect(foundationCount).to.equal(3);
+      
+      // Test with foundation that has no patients
+      const zeroCount = await medicalRecordsContract.getFoundationPatientCount(signers.doctor.address);
+      expect(zeroCount).to.equal(0);
+    });
+
+    it("should return patients by foundation", async function () {
+      const foundationPatients = await medicalRecordsContract.getPatientsByFoundation(signers.foundation.address);
+      
+      expect(foundationPatients.length).to.equal(3);
+      expect(foundationPatients).to.include(signers.patient.address);
+      expect(foundationPatients).to.include(signers.doctor.address);
+      expect(foundationPatients).to.include(signers.unauthorizedUser.address);
+    });
+
+    it("should return patient registration batch data", async function () {
+      const [names, timestamps, foundations, diseaseCounts] = await medicalRecordsContract
+        .getPatientRegistrationBatch(0, 2);
+      
+      expect(names.length).to.equal(2);
+      expect(timestamps.length).to.equal(2);
+      expect(foundations.length).to.equal(2);
+      expect(diseaseCounts.length).to.equal(2);
+      
+      // All should be registered by the same foundation
+      expect(foundations[0]).to.equal(signers.foundation.address);
+      expect(foundations[1]).to.equal(signers.foundation.address);
+      
+      // Disease counts should match (first two patients have 1 disease each)
+      expect(diseaseCounts[0]).to.equal(1);
+      expect(diseaseCounts[1]).to.equal(1);
+    });
+
+    it("should handle registration timeline correctly", async function () {
+      // Test with 1 day time range (86400 seconds)
+      const timeline = await medicalRecordsContract.getRegistrationTimeline(86400);
+      
+      expect(timeline.length).to.be.greaterThan(0);
+      
+      // Sum of timeline should equal total patients
+      let timelineSum = 0;
+      for (let i = 0; i < timeline.length; i++) {
+        timelineSum += Number(timeline[i]);
+      }
+      expect(timelineSum).to.equal(3);
+    });
+  });
+
+  describe("Enhanced Patient Information Access", function () {
+    beforeEach(async function () {
+      // Register patient
+      const patient = signers.patient.address;
+
+      const encryptedInput = await fhevm.createEncryptedInput(contractAddress, signers.foundation.address);
+      encryptedInput.add32(testPatientId);
+      const encrypted = await encryptedInput.encrypt();
+
+      await medicalRecordsContract
+        .connect(signers.foundation)
+        .registerPatient(
+          patient,
+          testPatientName,
+          encrypted.handles[0],
+          encrypted.inputProof
+        );
+
+      // Add multiple diseases
+      const diseases = [testDisease1, testDisease2];
+      for (const disease of diseases) {
+        const diseaseBytes = Buffer.from(disease, 'utf8');
+        const diseaseInput = await fhevm.createEncryptedInput(contractAddress, signers.foundation.address);
+        
+        for (let i = 0; i < diseaseBytes.length; i++) {
+          diseaseInput.add8(diseaseBytes[i]);
+        }
+        
+        const diseaseEncrypted = await diseaseInput.encrypt();
+
+        await medicalRecordsContract
+          .connect(signers.foundation)
+          .addDisease(
+            patient,
+            diseaseEncrypted.handles,
+            diseaseBytes.length,
+            diseaseEncrypted.inputProof
+          );
+      }
+    });
+
+    it("should return complete patient info with public name", async function () {
+      const patient = signers.patient.address;
+
+      const [name, foundation, timestamp, diseaseCount] = await medicalRecordsContract
+        .connect(signers.foundation)
+        .getPatientInfo(patient);
+
+      expect(name).to.equal(testPatientName);
+      expect(foundation).to.equal(signers.foundation.address);
+      expect(timestamp).to.be.greaterThan(0);
+      expect(diseaseCount).to.equal(2);
+    });
+
+    it("should maintain disease encryption and access control", async function () {
+      const patient = signers.patient.address;
+
+      // Foundation should be able to access diseases
+      const [encryptedDiseaseData, diseaseLength] = await medicalRecordsContract
+        .connect(signers.foundation)
+        .getPatientDisease(patient, 0);
+
+      expect(encryptedDiseaseData.length).to.be.greaterThan(0);
+      expect(diseaseLength).to.equal(Buffer.from(testDisease1, 'utf8').length);
+
+      // Unauthorized user should not be able to access diseases
+      await expect(
+        medicalRecordsContract
+          .connect(signers.unauthorizedUser)
+          .getPatientDisease(patient, 0)
+      ).to.be.revertedWith("Not authorized to access this patient's data");
+    });
+  });
+
+  describe("Public Statistics Access", function () {
+    it("should allow anyone to access system statistics", async function () {
+      // Register a patient first
+      const encryptedInput = await fhevm.createEncryptedInput(contractAddress, signers.foundation.address);
+      encryptedInput.add32(testPatientId);
+      const encrypted = await encryptedInput.encrypt();
+
+      await medicalRecordsContract
+        .connect(signers.foundation)
+        .registerPatient(
+          signers.patient.address,
+          testPatientName,
+          encrypted.handles[0],
+          encrypted.inputProof
+        );
+
+      // Unauthorized user should be able to access public statistics
+      const totalPatients = await medicalRecordsContract
+        .connect(signers.unauthorizedUser)
+        .getTotalPatients();
+      
+      expect(totalPatients).to.equal(1);
+
+      const [total, diseases, avg] = await medicalRecordsContract
+        .connect(signers.unauthorizedUser)
+        .getSystemStatistics();
+      
+      expect(total).to.equal(1);
+    });
+
+    it("should allow anyone to access patient names for statistics", async function () {
+      // Register patients
+      const patients = ["Alice Johnson", "Bob Smith"];
+      
+      for (let i = 0; i < patients.length; i++) {
+        const encryptedInput = await fhevm.createEncryptedInput(contractAddress, signers.foundation.address);
+        encryptedInput.add32(testPatientId + i);
+        const encrypted = await encryptedInput.encrypt();
+
+        await medicalRecordsContract
+          .connect(signers.foundation)
+          .registerPatient(
+            signers[Object.keys(signers)[i + 2] as keyof Signers].address,
+            patients[i],
+            encrypted.handles[0],
+            encrypted.inputProof
+          );
+      }
+
+      // Unauthorized user should be able to get names for statistics
+      const names = await medicalRecordsContract
+        .connect(signers.unauthorizedUser)
+        .getAllPatientNames();
+      
+      expect(names).to.include("Alice Johnson");
+      expect(names).to.include("Bob Smith");
     });
   });
 });

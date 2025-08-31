@@ -10,7 +10,7 @@ type Signers = {
   doctor: HardhatEthersSigner;
 };
 
-describe("MedicalRecordsSepolia Foundation System", function () {
+describe("MedicalRecordsSepolia Foundation System v2", function () {
   let signers: Signers;
   let medicalRecordsContract: MedicalRecords;
   let contractAddress: string;
@@ -27,7 +27,7 @@ describe("MedicalRecordsSepolia Foundation System", function () {
 
   before(async function () {
     if (fhevm.isMock) {
-      console.warn(`This hardhat test suite can only run on Sepolia Testnet`);
+      console.warn("This hardhat test suite can only run on Sepolia Testnet");
       this.skip();
     }
 
@@ -49,8 +49,8 @@ describe("MedicalRecordsSepolia Foundation System", function () {
     steps = 0;
   });
 
-  it("should register patient and manage medical records on Sepolia", async function () {
-    steps = 20;
+  it("should register patient and manage medical records on Sepolia v2", async function () {
+    steps = 18;
     this.timeout(12 * 60000); // 12 minutes timeout for real network operations
 
     progress("Initializing FHEVM CLI API...");
@@ -77,32 +77,22 @@ describe("MedicalRecordsSepolia Foundation System", function () {
     
     if (!patientExists) {
       progress(`Preparing patient data: "${testPatientName}", ID: ${testPatientId}`);
-      const nameBytes = Buffer.from(testPatientName, 'utf8');
-      
-      progress(`Converting name to ${nameBytes.length} bytes...`);
 
-      progress("Creating encrypted input for patient registration...");
+      progress("Creating encrypted input for patient ID only...");
       const encryptedInput = await fhevm.createEncryptedInput(contractAddress, signers.foundation.address);
       
-      // Add each byte of the name
-      for (let i = 0; i < nameBytes.length; i++) {
-        encryptedInput.add8(nameBytes[i]);
-      }
-      
-      // Add patient ID
+      // Add only patient ID (name is now public)
       encryptedInput.add32(testPatientId);
       
       const encrypted = await encryptedInput.encrypt();
-      const nameHandles = encrypted.handles.slice(0, nameBytes.length);
 
       progress(`Registering patient at MedicalRecords=${contractAddress}...`);
       const registerTx = await medicalRecordsContract
         .connect(signers.foundation)
         .registerPatient(
           signers.patient.address,
-          nameHandles,
-          nameBytes.length,
-          encrypted.handles[nameBytes.length], // ID handle
+          testPatientName,           // Public name
+          encrypted.handles[0],      // Encrypted ID
           encrypted.inputProof
         );
       
@@ -114,34 +104,18 @@ describe("MedicalRecordsSepolia Foundation System", function () {
     }
 
     progress("Getting patient basic information...");
-    const [foundation, timestamp, diseaseCount] = await medicalRecordsContract
+    const [name, foundation, timestamp, diseaseCount] = await medicalRecordsContract
       .connect(signers.foundation)
       .getPatientInfo(signers.patient.address);
     
-    progress(`Patient info - Foundation: ${foundation}, Timestamp: ${timestamp}, Diseases: ${diseaseCount}`);
+    progress(`Patient info - Name: ${name}, Foundation: ${foundation}, Diseases: ${diseaseCount}`);
 
-    progress("Getting encrypted patient name...");
-    const [encryptedNameData, nameLength] = await medicalRecordsContract
+    progress("Getting public patient name (no decryption needed)...");
+    const publicName = await medicalRecordsContract
       .connect(signers.foundation)
       .getPatientName(signers.patient.address);
 
-    progress(`Encrypted name data length: ${encryptedNameData.length}, actual length: ${nameLength}`);
-
-    progress("Decrypting patient name...");
-    const decryptedBytes = new Array(Number(nameLength));
-    
-    for (let i = 0; i < Number(nameLength); i++) {
-      const decryptedByte = await fhevm.userDecryptEuint(
-        FhevmType.euint8,
-        encryptedNameData[i],
-        contractAddress,
-        signers.foundation
-      );
-      decryptedBytes[i] = Number(decryptedByte);
-    }
-
-    const decryptedName = Buffer.from(decryptedBytes).toString('utf8');
-    progress(`Decrypted patient name: "${decryptedName}"`);
+    progress(`Public patient name: "${publicName}"`);
 
     progress("Getting and decrypting patient ID...");
     const encryptedId = await medicalRecordsContract
@@ -182,20 +156,25 @@ describe("MedicalRecordsSepolia Foundation System", function () {
     await addDiseaseTx.wait();
 
     progress("Getting updated patient information...");
-    const [, , updatedDiseaseCount] = await medicalRecordsContract
+    const [, , , updatedDiseaseCount] = await medicalRecordsContract
       .connect(signers.foundation)
       .getPatientInfo(signers.patient.address);
     
     progress(`Updated disease count: ${updatedDiseaseCount}`);
 
+    progress("Testing new statistics functions...");
+    const [totalPatients, totalDiseases, avgDiseases] = await medicalRecordsContract.getSystemStatistics();
+    progress(`Statistics - Patients: ${totalPatients}, Diseases: ${totalDiseases}, Avg: ${Number(avgDiseases)/100}`);
+
     // Basic validations
-    expect(decryptedName).to.equal(testPatientName);
+    expect(publicName).to.equal(testPatientName);
     expect(decryptedId).to.equal(testPatientId);
     expect(Number(updatedDiseaseCount)).to.be.greaterThan(0);
+    expect(Number(totalPatients)).to.be.greaterThan(0);
   });
 
-  it("should manage access permissions on Sepolia", async function () {
-    steps = 14;
+  it("should manage access permissions on Sepolia v2", async function () {
+    steps = 12;
     this.timeout(10 * 60000); // 10 minutes timeout
 
     progress("Initializing FHEVM CLI API...");
@@ -208,7 +187,7 @@ describe("MedicalRecordsSepolia Foundation System", function () {
     );
     
     if (!hasAccess) {
-      progress(`Patient granting doctor access...`);
+      progress("Patient granting doctor access...");
       const grantTx = await medicalRecordsContract
         .connect(signers.patient)
         .grantAccess(signers.doctor.address);
@@ -220,34 +199,18 @@ describe("MedicalRecordsSepolia Foundation System", function () {
     }
 
     progress("Verifying doctor can access patient information...");
-    const [foundationAddress, timestamp, diseaseCount] = await medicalRecordsContract
+    const [name, foundationAddress, timestamp, diseaseCount] = await medicalRecordsContract
       .connect(signers.doctor)
       .getPatientInfo(signers.patient.address);
 
-    progress(`Doctor access verified - Foundation: ${foundationAddress}, Diseases: ${diseaseCount}`);
+    progress(`Doctor access verified - Name: ${name}, Foundation: ${foundationAddress}, Diseases: ${diseaseCount}`);
 
-    progress("Testing doctor access to encrypted patient name...");
-    const [encryptedNameData, nameLength] = await medicalRecordsContract
+    progress("Testing doctor access to public patient name...");
+    const publicName = await medicalRecordsContract
       .connect(signers.doctor)
       .getPatientName(signers.patient.address);
 
-    progress(`Doctor accessed encrypted name data (${encryptedNameData.length} bytes, length: ${nameLength})`);
-
-    progress("Decrypting patient name as doctor...");
-    const decryptedBytes = new Array(Number(nameLength));
-    
-    for (let i = 0; i < Number(nameLength); i++) {
-      const decryptedByte = await fhevm.userDecryptEuint(
-        FhevmType.euint8,
-        encryptedNameData[i],
-        contractAddress,
-        signers.doctor
-      );
-      decryptedBytes[i] = Number(decryptedByte);
-    }
-
-    const decryptedName = Buffer.from(decryptedBytes).toString('utf8');
-    progress(`Doctor decrypted name: "${decryptedName}"`);
+    progress(`Doctor accessed public name: "${publicName}"`);
 
     progress("Getting disease count...");
     const totalDiseases = await medicalRecordsContract
@@ -288,10 +251,100 @@ describe("MedicalRecordsSepolia Foundation System", function () {
     // Validations
     expect(diseaseCount).to.be.greaterThan(0);
     expect(totalPatients).to.be.greaterThan(0);
-    expect(decryptedName).to.equal(testPatientName);
+    expect(publicName).to.equal(testPatientName);
   });
 
-  it("should test foundation authorization on Sepolia", async function () {
+  it("should test statistics functions on Sepolia", async function () {
+    steps = 10;
+    this.timeout(8 * 60000); // 8 minutes timeout
+
+    progress("Initializing FHEVM CLI API...");
+    await fhevm.initializeCLIApi();
+
+    progress("Getting system statistics...");
+    const [totalPatients, totalDiseases, avgDiseases] = await medicalRecordsContract.getSystemStatistics();
+    progress(`System Stats - Patients: ${totalPatients}, Diseases: ${totalDiseases}, Avg: ${Number(avgDiseases)/100}`);
+
+    progress("Getting all patient names for statistics...");
+    const allNames = await medicalRecordsContract.getAllPatientNames();
+    progress(`Retrieved ${allNames.length} patient names for analysis`);
+
+    progress("Getting foundation patient count...");
+    const foundationCount = await medicalRecordsContract.getFoundationPatientCount(signers.foundation.address);
+    progress(`Foundation has registered ${foundationCount} patients`);
+
+    progress("Getting patients by foundation...");
+    const foundationPatients = await medicalRecordsContract.getPatientsByFoundation(signers.foundation.address);
+    progress(`Foundation manages ${foundationPatients.length} patients`);
+
+    progress("Testing patient registration batch function...");
+    if (Number(totalPatients) > 0) {
+      const batchSize = Number(totalPatients) > 5 ? 5 : Number(totalPatients);
+      const [names, timestamps, foundations, diseaseCounts] = await medicalRecordsContract
+        .getPatientRegistrationBatch(0, batchSize);
+      
+      progress(`Batch data retrieved: ${names.length} records`);
+      
+      expect(names.length).to.equal(batchSize);
+      expect(timestamps.length).to.equal(batchSize);
+      expect(foundations.length).to.equal(batchSize);
+      expect(diseaseCounts.length).to.equal(batchSize);
+    }
+
+    progress("Testing registration timeline...");
+    const timeline = await medicalRecordsContract.getRegistrationTimeline(86400); // 1 day periods
+    progress(`Registration timeline has ${timeline.length} periods`);
+
+    progress("Getting total registrations...");
+    const totalRegistrations = await medicalRecordsContract.getTotalRegistrations();
+    progress(`Total registrations: ${totalRegistrations}`);
+
+    progress("Statistics test completed!");
+
+    // Basic validations
+    expect(Number(totalPatients)).to.be.greaterThan(0);
+    expect(Number(totalRegistrations)).to.be.greaterThan(0);
+    expect(allNames.length).to.equal(Number(totalPatients));
+  });
+
+  it("should test public access to statistics on Sepolia", async function () {
+    steps = 6;
+    this.timeout(5 * 60000); // 5 minutes timeout
+
+    progress("Testing public access to statistics (no authentication required)...");
+    
+    progress("Getting total patients (public access)...");
+    const totalPatients = await medicalRecordsContract
+      .connect(signers.doctor) // Using doctor (not foundation) to test public access
+      .getTotalPatients();
+    progress(`Public access - Total patients: ${totalPatients}`);
+
+    progress("Getting system statistics (public access)...");
+    const [patients, diseases, avg] = await medicalRecordsContract
+      .connect(signers.doctor)
+      .getSystemStatistics();
+    progress(`Public stats - Patients: ${patients}, Diseases: ${diseases}, Avg: ${Number(avg)/100}`);
+
+    progress("Getting all patient names (public access)...");
+    const names = await medicalRecordsContract
+      .connect(signers.doctor)
+      .getAllPatientNames();
+    progress(`Public access retrieved ${names.length} patient names`);
+
+    progress("Testing registration timeline (public access)...");
+    const timeline = await medicalRecordsContract
+      .connect(signers.doctor)
+      .getRegistrationTimeline(86400);
+    progress(`Public timeline access successful: ${timeline.length} periods`);
+
+    progress("Public statistics access test completed!");
+
+    // Validations
+    expect(Number(totalPatients)).to.be.greaterThan(0);
+    expect(names.length).to.equal(Number(patients));
+  });
+
+  it("should test foundation authorization and management on Sepolia", async function () {
     steps = 8;
     this.timeout(5 * 60000); // 5 minutes timeout
 
@@ -300,7 +353,6 @@ describe("MedicalRecordsSepolia Foundation System", function () {
 
     progress("Checking foundation authorization status...");
     const isAuthorized = await medicalRecordsContract.isFoundationAuthorized(signers.foundation.address);
-    
     progress(`Foundation ${signers.foundation.address} is ${isAuthorized ? 'authorized' : 'not authorized'}`);
     
     progress("Getting contract owner...");
@@ -311,14 +363,100 @@ describe("MedicalRecordsSepolia Foundation System", function () {
     const totalPatients = await medicalRecordsContract.getTotalPatients();
     progress(`Total patients: ${totalPatients}`);
 
+    progress("Getting total registrations...");
+    const totalRegistrations = await medicalRecordsContract.getTotalRegistrations();
+    progress(`Total registrations: ${totalRegistrations}`);
+
     progress("Testing patient registration check...");
     const isPatientRegistered = await medicalRecordsContract.isPatientRegistered(signers.patient.address);
     progress(`Patient ${signers.patient.address} is ${isPatientRegistered ? 'registered' : 'not registered'}`);
     
-    progress("Foundation authorization test completed!");
+    progress("Foundation management test completed!");
     
     // Basic validations
     expect(isAuthorized).to.be.true;
-    expect(totalPatients).to.be.greaterThan(0);
+    expect(Number(totalPatients)).to.be.greaterThan(0);
+    expect(Number(totalRegistrations)).to.be.greaterThan(0);
+  });
+
+  it("should test disease management and statistics on Sepolia", async function () {
+    steps = 12;
+    this.timeout(10 * 60000); // 10 minutes timeout
+
+    progress("Initializing FHEVM CLI API...");
+    await fhevm.initializeCLIApi();
+
+    progress("Checking if test patient exists...");
+    const patientExists = await medicalRecordsContract.isPatientRegistered(signers.patient.address);
+    
+    if (!patientExists) {
+      progress("Registering test patient for disease testing...");
+      const encryptedInput = await fhevm.createEncryptedInput(contractAddress, signers.foundation.address);
+      encryptedInput.add32(testPatientId);
+      const encrypted = await encryptedInput.encrypt();
+
+      const registerTx = await medicalRecordsContract
+        .connect(signers.foundation)
+        .registerPatient(
+          signers.patient.address,
+          testPatientName,
+          encrypted.handles[0],
+          encrypted.inputProof
+        );
+      
+      await registerTx.wait();
+      progress("Test patient registered");
+    } else {
+      progress("Test patient already exists");
+    }
+
+    progress("Getting current disease count...");
+    const currentDiseaseCount = await medicalRecordsContract
+      .connect(signers.foundation)
+      .getPatientDiseaseCount(signers.patient.address);
+    progress(`Current diseases: ${currentDiseaseCount}`);
+
+    progress("Adding new disease to patient...");
+    const diseaseBytes = Buffer.from(testDisease, 'utf8');
+    const diseaseInput = await fhevm.createEncryptedInput(contractAddress, signers.foundation.address);
+    
+    for (let i = 0; i < diseaseBytes.length; i++) {
+      diseaseInput.add8(diseaseBytes[i]);
+    }
+    
+    const diseaseEncrypted = await diseaseInput.encrypt();
+
+    const addDiseaseTx = await medicalRecordsContract
+      .connect(signers.foundation)
+      .addDisease(
+        signers.patient.address,
+        diseaseEncrypted.handles,
+        diseaseBytes.length,
+        diseaseEncrypted.inputProof
+      );
+
+    progress(`Waiting for add disease tx: ${addDiseaseTx.hash}...`);
+    await addDiseaseTx.wait();
+
+    progress("Getting updated disease count...");
+    const updatedDiseaseCount = await medicalRecordsContract
+      .connect(signers.foundation)
+      .getPatientDiseaseCount(signers.patient.address);
+    progress(`Updated disease count: ${updatedDiseaseCount}`);
+
+    progress("Getting updated system statistics...");
+    const [totalPatients, totalDiseases, avgDiseases] = await medicalRecordsContract.getSystemStatistics();
+    progress(`Updated stats - Patients: ${totalPatients}, Diseases: ${totalDiseases}, Avg: ${Number(avgDiseases)/100}`);
+
+    progress("Getting foundation statistics...");
+    const foundationPatientCount = await medicalRecordsContract.getFoundationPatientCount(signers.foundation.address);
+    progress(`Foundation manages ${foundationPatientCount} patients`);
+
+    progress("Disease management test completed!");
+
+    // Validations
+    expect(Number(updatedDiseaseCount)).to.be.greaterThan(Number(currentDiseaseCount));
+    expect(Number(totalPatients)).to.be.greaterThan(0);
+    expect(Number(totalDiseases)).to.be.greaterThan(0);
   });
 });
