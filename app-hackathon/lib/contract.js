@@ -1,10 +1,9 @@
 // lib/contract.js
 
-// Dirección del contrato desplegado en la red Sepolia
-export const contractAddress = "0xeb4853Fd3941b935bF4B623a1D074a0CAa3bF7A1";
+// Dirección del NUEVO contrato desplegado en la red Sepolia
+export const contractAddress = "0x9467A74FA655590739e5c5b617D10c35f2F1a7c4";
 
-// ABI (Application Binary Interface) completa del contrato
-// Esto le dice a nuestro frontend cómo interactuar con cada función.
+// ABI (Application Binary Interface) completa y actualizada del contrato
 export const contractABI = [
   {
     "inputs": [],
@@ -114,9 +113,34 @@ export const contractABI = [
         "internalType": "address",
         "name": "foundation",
         "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "string",
+        "name": "name",
+        "type": "string"
       }
     ],
     "name": "PatientRegistered",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "string",
+        "name": "diseaseType",
+        "type": "string"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "newCount",
+        "type": "uint256"
+      }
+    ],
+    "name": "StatisticsUpdated",
     "type": "event"
   },
   {
@@ -206,6 +230,76 @@ export const contractABI = [
   {
     "inputs": [
       {
+        "internalType": "string",
+        "name": "",
+        "type": "string"
+      }
+    ],
+    "name": "diseaseOccurrences",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "name": "foundationPatientCounts",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getAllPatientNames",
+    "outputs": [
+      {
+        "internalType": "string[]",
+        "name": "",
+        "type": "string[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "foundation",
+        "type": "address"
+      }
+    ],
+    "name": "getFoundationPatientCount",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
         "internalType": "address",
         "name": "patient",
         "type": "address"
@@ -281,6 +375,11 @@ export const contractABI = [
     "name": "getPatientInfo",
     "outputs": [
       {
+        "internalType": "string",
+        "name": "name",
+        "type": "string"
+      },
+      {
         "internalType": "address",
         "name": "foundation",
         "type": "address"
@@ -310,13 +409,108 @@ export const contractABI = [
     "name": "getPatientName",
     "outputs": [
       {
-        "internalType": "euint8[]",
-        "name": "data",
-        "type": "bytes32[]"
+        "internalType": "string",
+        "name": "",
+        "type": "string"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "startIndex",
+        "type": "uint256"
       },
       {
         "internalType": "uint256",
-        "name": "length",
+        "name": "count",
+        "type": "uint256"
+      }
+    ],
+    "name": "getPatientRegistrationBatch",
+    "outputs": [
+      {
+        "internalType": "string[]",
+        "name": "names",
+        "type": "string[]"
+      },
+      {
+        "internalType": "uint256[]",
+        "name": "timestamps",
+        "type": "uint256[]"
+      },
+      {
+        "internalType": "address[]",
+        "name": "foundations",
+        "type": "address[]"
+      },
+      {
+        "internalType": "uint256[]",
+        "name": "diseaseCounts",
+        "type": "uint256[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "foundation",
+        "type": "address"
+      }
+    ],
+    "name": "getPatientsByFoundation",
+    "outputs": [
+      {
+        "internalType": "address[]",
+        "name": "",
+        "type": "address[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "timeRangeSeconds",
+        "type": "uint256"
+      }
+    ],
+    "name": "getRegistrationTimeline",
+    "outputs": [
+      {
+        "internalType": "uint256[]",
+        "name": "",
+        "type": "uint256[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getSystemStatistics",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "totalPatients",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "totalDiseases",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "avgDiseasesPerPatient",
         "type": "uint256"
       }
     ],
@@ -326,6 +520,19 @@ export const contractABI = [
   {
     "inputs": [],
     "name": "getTotalPatients",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getTotalRegistrations",
     "outputs": [
       {
         "internalType": "uint256",
@@ -408,14 +615,9 @@ export const contractABI = [
         "type": "address"
       },
       {
-        "internalType": "externalEuint8[]",
-        "name": "nameData",
-        "type": "bytes32[]"
-      },
-      {
-        "internalType": "uint256",
-        "name": "nameLength",
-        "type": "uint256"
+        "internalType": "string",
+        "name": "name",
+        "type": "string"
       },
       {
         "internalType": "externalEuint32",
@@ -476,6 +678,19 @@ export const contractABI = [
     "name": "revokeFoundation",
     "outputs": [],
     "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "totalRegistrations",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
     "type": "function"
   }
 ];

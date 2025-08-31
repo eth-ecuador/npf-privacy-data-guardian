@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Plus, Copy, ExternalLink, FileText, Shield, Database, Eye, Play, HelpCircle, X } from "lucide-react"
+import { Plus, Copy, ExternalLink, FileText, Shield, Database, Eye, Play, HelpCircle, X, Lock, Key, LockOpen } from "lucide-react"
 import { useEffect } from "react"
 import { useRouter } from "next/navigation"
 
@@ -47,9 +47,7 @@ export default function Dashboard() {
   }, [])
 
   const handleDiseaseToggle = (disease: string) => {
-    setSelectedDiseases((prev) =>
-      prev.includes(disease) ? prev.filter((d) => d !== disease) : [...prev, disease]
-    )
+    setSelectedDiseases((prev) => (prev.includes(disease) ? prev.filter((d) => d !== disease) : [...prev, disease]))
   }
 
   const handleSave = () => {
@@ -78,36 +76,29 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: "#f3f9fe" }}>
-    {/* Header */}
-    <header className="border-b bg-white border-[#e8effb]">
-    <div className="container mx-auto px-6 py-4">
-        <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-[#141a21]">
-            Health Dashboard
-        </h1>
+      {/* Header */}
+      <header className="border-b bg-white border-[#e8effb]">
+        <div className="container mx-auto px-6 py-4">
+          <div className="flex items-center justify-between">
+            <h1 className="text-2xl font-bold text-[#141a21]">Health Dashboard</h1>
 
-        {/* Botón Disconnect con funcionalidad */}
-        <button
-            onClick={() => {
-            try {
-                localStorage.removeItem("walletAddress")
-            } catch {}
-            window.location.href = "/" // redirige al onboarding
-            }}
-            className="bg-red-500 text-white font-semibold py-2 px-4 rounded-md hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-400"
-            aria-label="Disconnect"
-        >
-            Disconnect
-        </button>
+            {/* Botón Disconnect con funcionalidad */}
+            <button
+              onClick={handleDisconnect}
+              className="bg-red-500 text-white font-semibold py-2 px-4 rounded-md hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-400"
+              aria-label="Disconnect"
+            >
+              Disconnect
+            </button>
+          </div>
         </div>
-    </div>
-    </header>
+      </header>
 
       {/* Main Content */}
       <main className="container mx-auto px-6 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
           {/* Welcome Section */}
-          <div className="space-y-4 animate-in fade-in duration-700">
+          <div className="space-y-4 animate-in fade-in duration-700 relative">
             <h2 className="text-4xl font-bold text-balance" style={{ color: "#141a21" }}>
               Welcome, Guardian
             </h2>
@@ -138,6 +129,110 @@ export default function Dashboard() {
                 Wallet address copied to clipboard!
               </p>
             )}
+
+            <div className="mt-8">
+              <Card
+                className="border cursor-pointer transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-blue-100/50 group animate-in slide-in-from-left duration-700 delay-300"
+                style={{
+                  backgroundColor: "#ffffff",
+                  borderColor: "#e8effb",
+                  boxShadow: "0 4px 12px rgba(26, 112, 254, 0.08)",
+                }}
+                onClick={() => {
+                  router.push("/contracts");
+                }}
+              >
+                <CardContent className="p-10">
+                  <div className="space-y-5">
+                    <div className="flex items-center space-x-3">
+                      <Database
+                        className="h-6 w-6 group-hover:scale-110 transition-transform duration-300"
+                        style={{ color: "#1a70fe" }}
+                      />
+                      <h3 className="text-xl font-bold" style={{ color: "#141a21" }}>
+                        Already have patients? Check their information.
+                      </h3>
+                    </div>
+
+                    <div className="space-y-4 pl-9">
+                      <div className="flex items-start space-x-2">
+                        <Shield className="h-4 w-4 mt-1 flex-shrink-0" style={{ color: "#1a70fe" }} />
+                        <p className="text-sm leading-relaxed font-medium" style={{ color: "#141a21" }}>
+                          Doctors cannot see who registered the patient.
+                        </p>
+                      </div>
+                      <div className="flex items-start space-x-2">
+                        <FileText className="h-4 w-4 mt-1 flex-shrink-0" style={{ color: "#1a70fe" }} />
+                        <p className="text-sm leading-relaxed font-medium" style={{ color: "#141a21" }}>
+                          We guarantee privacy: no one knows who is sick or what disease they have.
+                        </p>
+                      </div>
+                      <div className="flex items-start space-x-2">
+                        <Lock className="h-4 w-4 mt-1 flex-shrink-0" style={{ color: "#1a70fe" }} />
+                        <p className="text-sm leading-relaxed" style={{ color: "#5a6876" }}>
+                          Registration date is hidden from all users.
+                        </p>
+                      </div>
+                      <div className="flex items-start space-x-2">
+                        <Eye className="h-4 w-4 mt-1 flex-shrink-0" style={{ color: "#1a70fe" }} />
+                        <p className="text-sm leading-relaxed font-medium" style={{ color: "#141a21" }}>
+                          Patient ID and name are protected.
+                        </p>
+                      </div>
+                      <div className="flex items-start space-x-2">
+                        <Database className="h-4 w-4 mt-1 flex-shrink-0" style={{ color: "#1a70fe" }} />
+                        <p className="text-sm leading-relaxed" style={{ color: "#5a6876" }}>
+                          Diseases remain private unless explicit permission is granted.
+                        </p>
+                      </div>
+                      <div className="flex items-start space-x-2">
+                        <Key className="h-4 w-4 mt-1 flex-shrink-0" style={{ color: "#1a70fe" }} />
+                        <p className="text-sm leading-relaxed font-medium" style={{ color: "#141a21" }}>
+                          Access requires explicit authorization from the patient.
+                        </p>
+                      </div>
+                      <div className="flex items-start space-x-2">
+                        <LockOpen className="h-4 w-4 mt-1 flex-shrink-0" style={{ color: "#1a70fe" }} />
+                        <p className="text-sm leading-relaxed" style={{ color: "#5a6876" }}>
+                          Only permitted foundations can analyze anonymized data.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center space-x-2 pt-4 pl-9 group-hover:translate-x-1 transition-transform duration-300">
+                      <span
+                        className="text-sm font-semibold cursor-pointer"
+                        style={{ color: "#1a70fe" }}
+                        onClick={e => {
+                          e.stopPropagation();
+                          router.push("/contracts");
+                        }}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={e => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.stopPropagation();
+                            router.push("/contracts");
+                          }
+                        }}
+                        aria-label="View all patients"
+                      >
+                        View all patients →
+                      </span>
+                      <ExternalLink className="h-4 w-4 cursor-pointer" style={{ color: "#1a70fe" }}
+                        onClick={e => {
+                          e.stopPropagation();
+                          router.push("/contracts");
+                        }}
+                        role="button"
+                        tabIndex={0}
+                        aria-label="View all patients"
+                      />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           </div>
 
           {/* Help & Quick Guide */}
