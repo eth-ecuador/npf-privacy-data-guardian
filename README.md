@@ -66,12 +66,24 @@ graph TB
 - **Access Control**: Smart contract-based permission management
 - **Compliance Support**: Audit trails and regulatory compliance features
 
+## Roadmap
 
-## Security & Compliance
+- **MVP** — Target date: **October 15, 2025**  
+  Encrypted upload, basic smart contract access policy, and one FHE aggregate query.
 
-- **Cryptographic Standards**: AES-256-GCM, SHA-256, ECDSA
-- **Regulatory Support**: HIPAA, GDPR, FDA compliance features
-- **Audit Capabilities**: Complete on-chain transaction history
+- **Validation** — Target date: **November 15, 2025**  
+  End-to-end demo: user → upload → FHE query → aggregated report; basic audit logging.
+
+- **Next steps** — Target window: **Jan 15, 2026 – Mar 31, 2026**  
+  Expand FHE primitives, implement role-based access control, and run pilot programs with partner foundations.
+
+
+## Business model
+
+- **Non-profit subscription** — Pricing & pilot plans ready by **November 30, 2025**.  
+- **Pay-per-query / credits** — Beta available by **February 15, 2026**; general availability by **April 30, 2026**.  
+- **Professional services & grants** — Service offering and partner program launch **May 15, 2026**.
+
 
 ## Documentation
 
