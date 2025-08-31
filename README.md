@@ -84,6 +84,13 @@ graph TB
 - **Pay-per-query / credits** — Beta available by **February 15, 2026**; general availability by **April 30, 2026**.  
 - **Professional services & grants** — Service offering and partner program launch **May 15, 2026**.
 
+## Deployed Contracts
+
+The access-control contract for the current demo has been deployed to Sepolia. You can inspect transactions and contract state on Etherscan:
+
+- **Deployed contract address:** `0x9467a74fa655590739e5c5b617d10c35f2f1a7c4`  
+- **Etherscan (Sepolia):** [https://sepolia.etherscan.io/address/0x9467a74fa655590739e5c5b617d10c35f2f1a7c4](https://sepolia.etherscan.io/address/0x9467a74fa655590739e5c5b617d10c35f2f1a7c4)
+
 
 ## Documentation
 
