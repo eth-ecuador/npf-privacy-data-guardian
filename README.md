@@ -53,11 +53,6 @@ graph TB
 - **Storage**: FHE smart contracts for encrypted data
 - **Computation**: Zama FHE for off-chain analytics
 
-### Security Model
-- Zero-trust architecture with cryptographic verification
-- AES-256-GCM encryption with user-controlled keys
-- Immutable audit logs for all operations
-
 ## Key Benefits
 
 - **For Organizations**: Risk reduction, compliance support, operational insights
