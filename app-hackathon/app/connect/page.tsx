@@ -116,7 +116,7 @@ export default function CryptoWalletOnboarding() {
         </div>
         <div className="text-center mb-16 max-w-sm animate-fadeUp [animation-delay:120ms]">
           <p className="text-[#5a6876] text-base leading-relaxed">
-            Conecta tu wallet para asegurar y gestionar tus datos sensibles de forma descentralizada.
+            Connect your wallet to manage sensible data and store it in a secure way..
           </p>
         </div>
       </div>

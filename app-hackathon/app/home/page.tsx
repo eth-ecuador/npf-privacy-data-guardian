@@ -185,7 +185,7 @@ export default function Dashboard() {
                         Your Encrypted Archives
                       </p>
                       <p className="text-xs" style={{ color: "#5a6876" }}>
-                        View, upload, and organize your encrypted data stored on Filecoin.
+                        View, upload, and organize your encrypted data stored on chain.
                       </p>
                       <a href="#" className="text-xs hover:underline" style={{ color: "#1a70fe" }}>
                         Learn more
@@ -236,7 +236,7 @@ export default function Dashboard() {
                     <Play className="h-4 w-4 mt-0.5 flex-shrink-0" style={{ color: "#1a70fe" }} />
                     <div className="flex-1">
                       <p className="text-sm font-medium" style={{ color: "#141a21" }}>
-                        Run Analysis
+                        Epidemiology Report
                       </p>
                       <p className="text-xs" style={{ color: "#5a6876" }}>
                         Trigger an FHE-powered count or prevalence query after permission checks.

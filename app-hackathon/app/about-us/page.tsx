@@ -33,7 +33,7 @@ export default function AboutUsPage() {
               <div className="h-8 w-8 rounded-lg bg-[#e8effb] flex items-center justify-center">
                 <Heart className="h-4 w-4 text-[#1a70fe]" />
               </div>
-              <span className="font-bold text-[#141a21]">Apu HealthChain</span>
+              <span className="font-bold text-[#141a21]">APU Sensible Data Guardian</span>
             </div>
           </div>
         </div>
@@ -50,11 +50,11 @@ export default function AboutUsPage() {
             <div className="flex flex-wrap justify-center gap-2 mb-6">
               <Badge className="bg-[#dfe6f1] text-[#141a21] hover:bg-[#bac0ca]">Aleph Hackathon</Badge>
               <Badge className="bg-[#dfe6f1] text-[#141a21] hover:bg-[#bac0ca]">ZK + FHE</Badge>
-              <Badge className="bg-[#dfe6f1] text-[#141a21] hover:bg-[#bac0ca]">Filecoin + Zama</Badge>
+              <Badge className="bg-[#dfe6f1] text-[#141a21] hover:bg-[#bac0ca]">Zama</Badge>
             </div>
 
             <h1 className="text-4xl md:text-6xl font-bold tracking-tight text-balance text-[#141a21]">
-              Meet Apu HealthChain
+              Meet APU Sensible Data Guardian team
             </h1>
             <p className="text-xl md:text-2xl text-[#5a6876] font-medium">Know Our Team, Prepare for a Journey</p>
             <p className="text-lg text-[#5a6876] max-w-3xl mx-auto text-pretty">
@@ -94,7 +94,7 @@ export default function AboutUsPage() {
           <motion.div variants={fadeInUp} className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold mb-4 text-[#141a21]">Our Mission</h2>
             <p className="text-xl text-[#5a6876] max-w-3xl mx-auto text-pretty">
-              Apu HealthChain is a decentralized, privacy-preserving data vault designed for sensitive medical data. We
+              APU Sensible Data Guardian is a decentralized, privacy-preserving data vault designed for sensitive medical data. We
               enable pediatric health foundations to securely store encrypted data while facilitating privacy-preserving
               research that can save lives and improve healthcare outcomes.
             </p>
@@ -164,22 +164,22 @@ export default function AboutUsPage() {
               {
                 title: "Frontend Developer",
                 description:
-                  "Crafting intuitive user experiences and secure client-side encryption interfaces that make complex privacy technology accessible to healthcare professionals and families.",
+                  "ANTHONY BENAVIDES is a Crafting intuitive user experiences and secure client-side encryption interfaces that make complex privacy technology accessible to healthcare professionals and families.",
               },
               {
                 title: "Backend Developer",
                 description:
-                  "Building robust APIs and integrating cutting-edge FHE computations with decentralized storage to ensure seamless, secure data operations.",
+                  "CARLOS ISRAEL is Building robust APIs and integrating cutting-edge FHE computations with decentralized storage to ensure seamless, secure data operations.",
               },
               {
-                title: "Project Manager & Product Owner",
+                title: "Project Manager",
                 description:
-                  "Coordinating development efforts and ensuring our solution meets real-world healthcare compliance requirements while delivering exceptional user value.",
+                  "SANTIAGO HERMOZA Coordinating development efforts and ensuring our solution meets real-world healthcare compliance requirements while delivering exceptional user value.",
               },
               {
-                title: "Blockchain Developer",
+                title: "QA",
                 description:
-                  "Designing and implementing smart contracts for secure access control and data governance, ensuring transparent and immutable audit trails on the blockchain.",
+                  "LUIS CORDERO Designing and implementing smart contracts for secure access control and data governance, ensuring transparent and immutable audit trails on the blockchain.",
               },
             ].map((member, index) => (
               <motion.div key={index} variants={fadeInUp}>
@@ -276,17 +276,25 @@ export default function AboutUsPage() {
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Button size="lg" className="text-lg px-8 bg-[#1a70fe] hover:bg-[#1a70fe]/90 text-[#ffffff]">
-                  Start Your Journey
-                  <ArrowRight className="ml-2 h-5 w-5" />
-                </Button>
-                <Button
-                  size="lg"
-                  className="text-lg px-8 bg-[#ffffff] border-[#dfe6f1] text-[#141a21] hover:bg-[#f3f9fe]"
+                <Link href="/connect">
+                  <Button size="lg" className="text-lg px-8 bg-[#1a70fe] hover:bg-[#1a70fe]/90 text-[#ffffff]">
+                    Start Your Journey
+                    <ArrowRight className="ml-2 h-5 w-5" />
+                  </Button>
+                </Link>
+                <a
+                  href="https://apuhealth.gitbook.io/apu"
+                  target="_blank"
+                  rel="noopener noreferrer"
                 >
-                  <FileText className="mr-2 h-5 w-5" />
-                  Read Our Vision
-                </Button>
+                  <Button
+                    size="lg"
+                    className="text-lg px-8 bg-[#ffffff] border-[#dfe6f1] text-[#141a21] hover:bg-[#f3f9fe]"
+                  >
+                    <FileText className="mr-2 h-5 w-5" />
+                    Read Our Vision
+                  </Button>
+                </a>
               </div>
 
               <p className="text-sm text-[#bac0ca]">
@@ -298,7 +306,7 @@ export default function AboutUsPage() {
 
         {/* Footer */}
         <footer className="py-8 text-center text-sm text-[#bac0ca] border-t border-[#dfe6f1]">
-          <p>© 2024 Apu HealthChain. Built for the Aleph Hackathon with ❤️ for healthcare privacy.</p>
+          <p>© 2025 Apu HealthChain. Built for the Aleph Hackathon with ❤️ for healthcare privacy.</p>
         </footer>
       </main>
     </div>

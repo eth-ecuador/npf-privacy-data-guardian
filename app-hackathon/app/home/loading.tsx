@@ -42,7 +42,7 @@ export default function Loading() {
 
         {/* Loading Text */}
         <h1 className="text-2xl font-medium text-[#141a21] text-center">
-          Validando y creando bóveda...
+          Creating your data vault...
         </h1>
       </div>
 

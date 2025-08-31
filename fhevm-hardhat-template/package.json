@@ -24,9 +24,10 @@
     "hardhat"
   ],
   "dependencies": {
-    "encrypted-types": "^0.0.4",
     "@fhevm/solidity": "^0.7.0",
-    "@zama-fhe/oracle-solidity": "^0.1.0"
+    "@zama-fhe/oracle-solidity": "^0.1.0",
+    "encrypted-types": "^0.0.4",
+    "fhevmjs": "^0.6.2"
   },
   "devDependencies": {
     "@fhevm/hardhat-plugin": "^0.0.1-6",

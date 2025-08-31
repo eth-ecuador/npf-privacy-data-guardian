@@ -2,8 +2,11 @@
 
 interface EthereumProvider {
   isMetaMask?: boolean;
-  request: (args: { method: string; params?: unknown[] | Record<string, unknown> }) => Promise<unknown>;
-  // Add more properties/methods as needed
+  request: (args: {
+    method: string;
+    params?: unknown[] | Record<string, unknown>;
+  }) => Promise<unknown>;
+  // puedes añadir otros métodos como on, removeListener, selectedAddress, etc. según necesites
 }
 
 declare global {

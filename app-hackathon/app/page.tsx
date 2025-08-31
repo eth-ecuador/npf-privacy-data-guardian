@@ -92,7 +92,7 @@ export default function LandingPage() {
                 fillRule="evenodd"
               ></path>
             </svg>
-            <h2 className="text-xl font-bold tracking-tight">SecureHealth</h2>
+            <h2 className="text-xl font-bold tracking-tight">APU Sensible Data Guardian</h2>
           </div>
 
           {/* Desktop Navigation - Hidden when scrolled */}
@@ -110,12 +110,14 @@ export default function LandingPage() {
               </button>
 
               {/* 👇 AQUI ESTÁN LOS CAMBIOS 👇 */}
-              <Link
-                href="/documentation"
+              <a
+                href="https://apuhealth.gitbook.io/apu/"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="text-gray-600 hover:text-[#1193d4] text-base font-medium transition-colors"
               >
                 Documentation
-              </Link>
+              </a>
               <Link
                 href="/about-us"
                 className="text-gray-600 hover:text-[#1193d4] text-base font-medium transition-colors"
@@ -212,7 +214,7 @@ export default function LandingPage() {
               Own your encrypted health data.
             </h1>
             <p className="text-lg md:text-xl mb-8 max-w-2xl mx-auto leading-relaxed text-white/90">
-              Client-side encryption, Filecoin storage, and on-chain permissions for privacy-preserving research.
+              Client-side encryption, and on-chain permissions for privacy-preserving research.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
               <Link href="/connect">
@@ -267,7 +269,7 @@ export default function LandingPage() {
                     Decentralized Storage
                   </h3>
                   <p className="leading-relaxed" style={{ color: "#5a6876" }}>
-                    Store encrypted data by CID on Filecoin.
+                    Store encrypted data on blockchain.
                   </p>
                 </CardContent>
               </Card>
@@ -341,7 +343,7 @@ export default function LandingPage() {
                   Upload & Encrypt
                 </h3>
                 <p className="leading-relaxed" style={{ color: "#5a6876" }}>
-                  Client-side encryption; backend stores only the CID.
+                  Client-side encryption by FHE.
                 </p>
                 <div className="hidden md:block mt-4">
                   <div className="w-8 h-0.5" style={{ backgroundColor: "#bac0ca" }}></div>
@@ -465,9 +467,7 @@ export default function LandingPage() {
               </div>
 
               {/* FILECOIN */}
-              <div className="flex items-center justify-center opacity-70 hover:opacity-100 transition-opacity duration-200">
-                <img src="/filecoin-logo-blue-text.png" alt="FILECOIN" className="h-12 md:h-16 object-contain" />
-              </div>
+
             </div>
           </div>
         </section>
